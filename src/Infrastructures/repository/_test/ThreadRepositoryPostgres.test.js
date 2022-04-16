@@ -2,6 +2,7 @@ const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 const NewThread = require('../../../Domains/threads/entities/NewThread');
+const Thread = require('../../../Domains/threads/entities/Thread');
 const pool = require('../../database/postgres/pool');
 const ThreadRepositoryPostgres = require('../ThreadRepositoryPostgres');
 
@@ -14,7 +15,7 @@ describe('ThreadRepository', () => {
   });
 
   beforeAll(async () => {
-    await UsersTableTestHelper.addUser({ id: 'user-0001' });
+    await UsersTableTestHelper.addUser({ id: 'user-0001', username: 'user0001' });
   });
 
   afterAll(async () => {
@@ -88,6 +89,41 @@ describe('ThreadRepository', () => {
         .resolves
         .not
         .toThrowError(NotFoundError);
+    });
+  });
+
+  describe('getThreadById function', () => {
+    it('should throw NotFound error when given invalid thread id', async () => {
+      const threadRepository = new ThreadRepositoryPostgres(pool);
+
+      await expect(threadRepository.getThreadById('thread-xxx-invalid'))
+        .rejects
+        .toThrowError(NotFoundError);
+    });
+
+    it('should return thread correctly', async () => {
+      const date = new Date();
+      await ThreadsTableTestHelper.addThread({
+        id: 'thread-123',
+        owner: 'user-0001',
+        body: 'thread body',
+        title: 'thread title',
+        createdAt: date,
+      });
+
+      const expectedThread = new Thread({
+        id: 'thread-123',
+        username: 'user0001',
+        title: 'thread title',
+        body: 'thread body',
+        date,
+      });
+
+      const threadRepository = new ThreadRepositoryPostgres(pool);
+
+      const thread = await threadRepository.getThreadById('thread-123');
+
+      expect(thread).toStrictEqual(expectedThread);
     });
   });
 });
