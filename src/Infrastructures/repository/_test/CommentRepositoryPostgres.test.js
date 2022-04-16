@@ -6,10 +6,12 @@ const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelp
 const NewComment = require('../../../Domains/comments/entities/NewComment');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
+const Comment = require('../../../Domains/comments/entities/Comment');
 
 describe('CommentRepositoryPostgres', () => {
   const threadId = 'thread-001';
   const commentedUserId = 'user-002';
+  const commentedUsername = 'dev2';
 
   beforeAll(async () => {
     await UsersTableTestHelper.addUser({
@@ -153,6 +155,64 @@ describe('CommentRepositoryPostgres', () => {
       await expect(commentRepositoryPostgres.deleteCommentById('comment-xxx'))
         .rejects
         .toThrowError(NotFoundError);
+    });
+  });
+
+  describe('getCommentsByThreadId', () => {
+    it('should have total comments correctly', async () => {
+      await CommentsTableTestHelper.addComment({
+        id: 'comment-0001',
+        threadId,
+        owner: commentedUserId,
+        content: 'default content',
+      });
+
+      async function addCommentForAnotherThread() {
+        await ThreadsTableTestHelper.addThread({
+          id: 'thread-xxx',
+          owner: commentedUserId,
+        });
+
+        await CommentsTableTestHelper.addComment({
+          id: 'comment-0002',
+          threadId: 'thread-xxx',
+          owner: commentedUserId,
+          content: 'another content',
+        });
+      }
+
+      await addCommentForAnotherThread();
+
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool);
+
+      const comments = await commentRepositoryPostgres.getCommentsByThreadId(threadId);
+
+      expect(comments).toHaveLength(1);
+    });
+
+    it('each comment should have correct property and value', async () => {
+      const date = new Date();
+      const payloadComment = {
+        threadId,
+        content: 'default comment',
+        owner: commentedUserId,
+        id: 'comment-0001',
+        date,
+      };
+
+      await CommentsTableTestHelper.addComment(payloadComment);
+
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool);
+      const expecetedComments = [new Comment({
+        id: 'comment-0001',
+        content: 'default comment',
+        username: commentedUsername,
+        date,
+        is_delete: false,
+      })];
+
+      const comments = await commentRepositoryPostgres.getCommentsByThreadId(threadId);
+      expect(comments).toStrictEqual(expecetedComments);
     });
   });
 });

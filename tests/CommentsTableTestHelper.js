@@ -13,6 +13,19 @@ const CommentsTableTestHelper = {
     return rows;
   },
 
+  async addComment({
+    id, content, threadId, owner, date = new Date(),
+  }) {
+    const query = {
+      text: `INSERT INTO 
+             comments(id, content, thread_id, owner, created_at)
+             VALUES($1, $2, $3, $4, $5)`,
+      values: [id, content, threadId, owner, date],
+    };
+
+    await pool.query(query);
+  },
+
   async cleanTable() {
     await pool.query('DELETE FROM comments WHERE 1=1');
   },
