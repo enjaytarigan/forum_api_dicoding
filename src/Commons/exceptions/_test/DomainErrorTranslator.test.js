@@ -19,6 +19,12 @@ describe('DomainErrorTranslator', () => {
       .toStrictEqual(new InvariantError('harus melampirkan content dari komentar'));
     expect(DomainErrorTranslator.translate(new Error('ADD_COMMENT_USE_CASE.PAYLOAD_NOT_MEET_DATA_TYPE_SPECIFICATION')))
       .toStrictEqual(new InvariantError('content komentar harus berupa string'));
+    expect(DomainErrorTranslator.translate(new Error('ADD_REPLY_COMMENT_USE_CASE.CONTENT_MUST_BE_STRING_AND_NOT_TO_EMPTY')))
+      .toStrictEqual(new InvariantError('content harus string dan tidak kosong'));
+    expect(DomainErrorTranslator.translate(new Error('ADD_REPLY_COMMENT_USE_CASE.PAYLOAD_NOT_CONTAIN_NEEDED_PROPERTY')))
+      .toStrictEqual(new InvariantError('content harus string'));
+    expect(DomainErrorTranslator.translate(new Error('ADD_REPLY_COMMENT_USE_CASE.PAYLOAD_NOT_MEET_DATA_TYPE_SPECIFICATION')))
+      .toStrictEqual(new InvariantError('harus melampirkan content'));
   });
 
   it('should return original error when error message is not needed to translate', () => {

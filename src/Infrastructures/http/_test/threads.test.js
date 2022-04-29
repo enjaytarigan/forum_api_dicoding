@@ -7,17 +7,18 @@ const pool = require('../../database/postgres/pool');
 const createServer = require('../createServer');
 
 describe('/threads endpoint', () => {
+  const exampleUser = {
+    fullname: 'example user',
+    username: 'example',
+    password: 'example',
+  };
   beforeAll(async () => {
     const server = await createServer(container);
 
     await server.inject({
       method: 'POST',
       url: '/users',
-      payload: {
-        fullname: 'example user',
-        username: 'example',
-        password: 'example',
-      },
+      payload: exampleUser,
     });
   });
 
@@ -56,8 +57,8 @@ describe('/threads endpoint', () => {
         method: 'POST',
         url: '/authentications',
         payload: {
-          username: 'example',
-          password: 'example',
+          username: exampleUser.username,
+          password: exampleUser.password,
         },
       });
 
@@ -87,8 +88,8 @@ describe('/threads endpoint', () => {
         method: 'POST',
         url: '/authentications',
         payload: {
-          username: 'example',
-          password: 'example',
+          username: exampleUser.username,
+          password: exampleUser.password,
         },
       });
       const { accessToken } = JSON.parse(responseAuth.payload).data;
@@ -119,8 +120,8 @@ describe('/threads endpoint', () => {
         method: 'POST',
         url: '/authentications',
         payload: {
-          username: 'example',
-          password: 'example',
+          username: exampleUser.username,
+          password: exampleUser.password,
         },
       });
       const { accessToken } = JSON.parse(responseAuth.payload).data;
@@ -177,13 +178,13 @@ describe('/threads endpoint', () => {
       const server = await createServer(container);
 
       const userJohnPayload = {
-        username: 'johndoe',
+        username: 'johndoe_dummy',
         password: 'user',
         fullname: 'john doe',
       };
 
       const userDoePayload = {
-        username: 'doe',
+        username: 'doe_dummy',
         password: 'user',
         fullname: 'doe doe',
       };
@@ -239,9 +240,8 @@ describe('/threads endpoint', () => {
 
       const { addedThread: threadJohn } = JSON.parse(responsePostThreadJson.payload).data;
 
-      // doe comment on thread john
-
-      await server.inject({
+      // comment 1
+      const responsePostCommentDoe = await server.inject({
         url: `/threads/${threadJohn.id}/comments`,
         method: 'POST',
         payload: {
@@ -251,12 +251,26 @@ describe('/threads endpoint', () => {
           Authorization: `Bearer ${accessTokenDoe}`,
         },
       });
+      const { addedComment: firstComment } = JSON.parse(responsePostCommentDoe.payload).data;
 
+      // reply to comment 1
+      await server.inject({
+        url: `/threads/${threadJohn.id}/comments/${firstComment.id}/replies`,
+        method: 'POST',
+        payload: {
+          content: 'reply comment 1',
+        },
+        headers: {
+          Authorization: `Bearer ${accessTokenJohn}`,
+        },
+      });
+
+      // comment 2
       const responseSecondCommentDoe = await server.inject({
         url: `/threads/${threadJohn.id}/comments`,
         method: 'POST',
         payload: {
-          content: 'comment 1',
+          content: 'comment 2',
         },
         headers: {
           Authorization: `Bearer ${accessTokenDoe}`,
@@ -290,13 +304,18 @@ describe('/threads endpoint', () => {
       expect(responseJson.status).toEqual('success');
       expect(responseJson).toHaveProperty('data');
       expect(responseJson.data).toHaveProperty('thread');
-
       const { thread } = responseJson.data;
       expect(thread.id).toEqual(threadJohn.id);
       expect(thread.title).toEqual(payloadThreadJohn.title);
       expect(thread.body).toEqual(payloadThreadJohn.body);
       expect(thread.username).toEqual(userJohnPayload.username);
       expect(thread.comments).toHaveLength(2);
+      const deletedComment = thread.comments.find((comment) => comment.id === secondCommentDoe.id);
+      const firstCommentDoe = thread.comments.find((comment) => comment.id === firstComment.id);
+
+      expect(deletedComment.content).toEqual('**komentar telah dihapus**');
+      expect(firstCommentDoe).toHaveProperty('replies');
+      expect(firstCommentDoe.replies).toHaveLength(1);
     });
   });
 });
