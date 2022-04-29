@@ -215,4 +215,27 @@ describe('CommentRepositoryPostgres', () => {
       expect(comments).toStrictEqual(expecetedComments);
     });
   });
+
+  describe('verifyCommentIsExist function', () => {
+    it('should throw not found error when given invalid commentId', async () => {
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool);
+
+      await expect(commentRepositoryPostgres.verifyCommentIsExist('xxx'))
+        .rejects
+        .toThrowError(NotFoundError);
+    });
+
+    it('should not throw error when given valid commentId', async () => {
+      const payload = {
+        threadId, owner: commentedUserId, id: 'comment-xxx', content: 'exmaple comment',
+      };
+      await CommentsTableTestHelper.addComment(payload);
+
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool);
+      await expect(commentRepositoryPostgres.verifyCommentIsExist(payload.id))
+        .resolves
+        .not
+        .toThrow();
+    });
+  });
 });

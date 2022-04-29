@@ -21,6 +21,10 @@ DomainErrorTranslator._directories = {
   'ADD_THREAD_USE_CASE.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('title dan body harus string'),
   'ADD_COMMENT_USE_CASE.PAYLOAD_NOT_CONTAIN_NEEDED_PROERTY': new InvariantError('harus melampirkan content dari komentar'),
   'ADD_COMMENT_USE_CASE.PAYLOAD_NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('content komentar harus berupa string'),
+  'ADD_REPLY_COMMENT_USE_CASE.CONTENT_MUST_BE_STRING_AND_NOT_TO_EMPTY': new InvariantError('content harus string dan tidak kosong'),
+  'ADD_REPLY_COMMENT_USE_CASE.PAYLOAD_NOT_CONTAIN_NEEDED_PROPERTY': new InvariantError('content harus string'),
+  'ADD_REPLY_COMMENT_USE_CASE.PAYLOAD_NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('harus melampirkan content'),
+
 };
 
 module.exports = DomainErrorTranslator;
